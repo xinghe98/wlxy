@@ -34,7 +34,7 @@ func GetCaphta(url string) string {
 	return caphta
 }
 
-func GetCookie(uri string, username string, password string, caphta string) []*http.Cookie {
+func GetCookie(uri string, username string, password string, caphta string) (*http.Client, []*http.Cookie) {
 	data := make(map[string]string)
 	data["usrSteUsrId"] = username
 	data["userPassword"] = password
@@ -52,14 +52,17 @@ func GetCookie(uri string, username string, password string, caphta string) []*h
 	var response map[string]interface{}
 	body, _ := ioutil.ReadAll(resp.Body)
 	_ = json.Unmarshal(body, &response)
-	if response["code"] == "200" {
+	if response["code"] == float64(200) {
 		fmt.Println("登录成功")
 		cookie := resp.Cookies()
-		return cookie
+		return client, cookie
 	} else {
 		fmt.Println("登录失败")
-		fmt.Printf()
-		return nil
+		//fmt.Printf("%T\n", response["code"])
+		fmt.Println(response["msg"])
+		fmt.Println(response["code"])
+		//fmt.Println(len(response["code"]))
+		return nil, nil
 	}
 
 }
