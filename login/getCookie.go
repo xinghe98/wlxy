@@ -2,12 +2,13 @@ package login
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
-	"golang.org/x/net/publicsuffix"
 	"io/ioutil"
 	"net/http"
 	"net/http/cookiejar"
+
+	"github.com/xinghe98/wlxy/util"
+	"golang.org/x/net/publicsuffix"
 )
 
 var client *http.Client
@@ -38,7 +39,7 @@ func GetCookie(uri string, username string, password string, caphta string) []*h
 	data["usrSteUsrId"] = username
 	data["userPassword"] = password
 	data["usrCode"] = caphta
-	b, _ := json.Marshal(data)
+	b := util.MapToJson(data)
 	request, err := http.NewRequest("POST", uri, bytes.NewBuffer(b))
 	request.Header.Set("Content-Type", "application/json;charset=UTF-8")
 	request.Header.Set("Accept", "application/json, text/plain, */*")
@@ -53,6 +54,8 @@ func GetCookie(uri string, username string, password string, caphta string) []*h
 		cookie := resp.Cookies()
 		return cookie
 	} else {
+		data, _ := ioutil.ReadAll(resp.Body)
+		data = util.JsonToMap[string](string(data))
 		fmt.Println("登录失败")
 		return nil
 	}
