@@ -2,12 +2,12 @@ package login
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/cookiejar"
 
-	"github.com/xinghe98/wlxy/util"
 	"golang.org/x/net/publicsuffix"
 )
 
@@ -28,7 +28,7 @@ func GetCaphta(url string) string {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println("请输入验证码：")
+	fmt.Print("请输入验证码：")
 	var caphta string
 	fmt.Scanln(&caphta)
 	return caphta
@@ -39,7 +39,7 @@ func GetCookie(uri string, username string, password string, caphta string) []*h
 	data["usrSteUsrId"] = username
 	data["userPassword"] = password
 	data["usrCode"] = caphta
-	b := util.MapToJson(data)
+	b, _ := json.Marshal(data)
 	request, err := http.NewRequest("POST", uri, bytes.NewBuffer(b))
 	request.Header.Set("Content-Type", "application/json;charset=UTF-8")
 	request.Header.Set("Accept", "application/json, text/plain, */*")
@@ -49,14 +49,16 @@ func GetCookie(uri string, username string, password string, caphta string) []*h
 	}
 	resp, _ := client.Do(request)
 	defer resp.Body.Close()
-	if resp.StatusCode == 200 {
+	var response map[string]interface{}
+	body, _ := ioutil.ReadAll(resp.Body)
+	_ = json.Unmarshal(body, &response)
+	if response["code"] == "200" {
 		fmt.Println("登录成功")
 		cookie := resp.Cookies()
 		return cookie
 	} else {
-		data, _ := ioutil.ReadAll(resp.Body)
-		data = util.JsonToMap[string](string(data))
 		fmt.Println("登录失败")
+		fmt.Printf()
 		return nil
 	}
 
