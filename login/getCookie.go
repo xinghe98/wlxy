@@ -4,12 +4,19 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/xinghe98/wlxy/util"
 	"io/ioutil"
 	"net/http"
 	"net/http/cookiejar"
 
 	"golang.org/x/net/publicsuffix"
 )
+
+type Login struct {
+	Username string `json:"usrSteUsrId"`
+	Password string `json:"userPassword"`
+	Caphta   string `json:"usrCode"`
+}
 
 var client *http.Client
 
@@ -34,11 +41,11 @@ func GetCaphta(url string) string {
 	return caphta
 }
 
-func GetCookie(uri string, username string, password string, caphta string) (*http.Client, []*http.Cookie) {
+func GetCookie(uri string, info Login) (*http.Client, []*http.Cookie, error) {
 	data := make(map[string]string)
-	data["usrSteUsrId"] = username
-	data["userPassword"] = password
-	data["usrCode"] = caphta
+	data["usrSteUsrId"] = info.Username
+	data["userPassword"] = info.Password
+	data["usrCode"] = info.Caphta
 	b, _ := json.Marshal(data)
 	request, err := http.NewRequest("POST", uri, bytes.NewBuffer(b))
 	request.Header.Set("Content-Type", "application/json;charset=UTF-8")
@@ -49,20 +56,13 @@ func GetCookie(uri string, username string, password string, caphta string) (*ht
 	}
 	resp, _ := client.Do(request)
 	defer resp.Body.Close()
-	var response map[string]interface{}
-	body, _ := ioutil.ReadAll(resp.Body)
-	_ = json.Unmarshal(body, &response)
+	response := util.JsonToMap(resp.Body)
 	if response["code"] == float64(200) {
 		fmt.Println("登录成功")
 		cookie := resp.Cookies()
-		return client, cookie
+		return client, cookie, nil
 	} else {
-		fmt.Println("登录失败")
-		//fmt.Printf("%T\n", response["code"])
-		fmt.Println(response["msg"])
-		fmt.Println(response["code"])
-		//fmt.Println(len(response["code"]))
-		return nil, nil
+		return nil, nil, fmt.Errorf("登录失败,错误信息：%s", response["msg"])
 	}
 
 }

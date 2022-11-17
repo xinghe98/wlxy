@@ -12,9 +12,14 @@ func main() {
 	if err != nil {
 		return
 	}
-	cap := login.GetCaphta("http://wlxy.jxnxs.com/app/captcha/captcha")
-	client, _ := login.GetCookie("http://wlxy.jxnxs.com/app/user/single/userlogin/login", "110379", "/DFGws7yGmJIUmbuYMU+Mg==", cap)
-	fmt.Println(client)
+	caphta := login.GetCaphta("http://wlxy.jxnxs.com/app/captcha/captcha")
+	client, _, err := login.GetCookie("http://wlxy.jxnxs.com/app/user/single/userlogin/login", login.Login{
+		Username: "110379", Password: "/DFGws7yGmJIUmbuYMU+Mg==", Caphta: caphta,
+	})
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 	res, err := client.Get("http://wlxy.jxnxs.com/app/home")
 	if err != nil {
 		return
