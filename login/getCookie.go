@@ -12,9 +12,14 @@ import (
 	"golang.org/x/net/publicsuffix"
 )
 
+type Login struct {
+	Username string
+	Password string
+}
+
 var client *http.Client
 
-func GetCaphta(url string) string {
+func (l *Login) GetCaphta(url string) string {
 	cookieJar, _ := cookiejar.New(&cookiejar.Options{PublicSuffixList: publicsuffix.List})
 	client = &http.Client{
 		Jar: cookieJar,
@@ -35,11 +40,11 @@ func GetCaphta(url string) string {
 	return caphta
 }
 
-func GetCookie(uri string, Username string, Password string, Caphta string) (*http.Client, []*http.Cookie, error) {
+func (l *Login) GetCookie(uri string, caphta string) (*http.Client, []*http.Cookie, error) {
 	data := make(map[string]string)
-	data["usrSteUsrId"] = Username
-	data["userPassword"] = Password
-	data["usrCode"] = Caphta
+	data["usrSteUsrId"] = l.Username
+	data["userPassword"] = l.Password
+	data["usrCode"] = caphta
 	b, _ := json.Marshal(data)
 	request, err := http.NewRequest("POST", uri, bytes.NewBuffer(b))
 	request.Header.Set("Content-Type", "application/json;charset=UTF-8")

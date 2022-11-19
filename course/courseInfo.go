@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-//course_id:resId (小节课程id)
+//course_id:resId (大节课程id)
 //student_id:student_id (学员id)
 //lesson_id : mod_id (小节课程id)
 //lesson_location : 'default', (小节课程位置)
@@ -18,39 +18,53 @@ import (
 //tkh_id : tkh_id|app_tkh_id
 //cmt_lrn_pass_ind 判断课程是否完成
 
-type CourseInfo struct {
-	itmId    string //课程id
-	itmTitle string //课程名称
+type GetCourseInfo struct {
+	Session *http.Client
 }
 
-// GetMyCourse 访问 http://wlxy.jxnxs.com/app/course/getMyCourse 获取课程列表
-func GetMyCourse(session *http.Client) {
-	b := "pageNo=1&pageSize=10&appStatus=I&pdate=" + strconv.FormatInt(time.Now().Unix(), 10)
-	request, err := http.NewRequest("POST", "http://wlxy.jxnxs.com/app/course/getMyCourse", strings.NewReader(b))
-	request.Header.Set("Referer", "http://wlxy.jxnxs.com/app/course/signup")
+// 专门用来post接口获取课程信息的接口
+func (g GetCourseInfo) requests(method string, uri string, b string) *http.Request {
+	request, err := http.NewRequest(method, uri, strings.NewReader(b))
 	request.Header.Set("Accept", "application/json,text/javascript, */*; q=0.01")
-	request.Header.Set("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
 	request.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36")
-
 	if err != nil {
 		panic(err)
 	}
-	resp, _ := session.Do(request)
+	return request
+}
+
+// GetMyCourse 访问 http://wlxy.jxnxs.com/app/course/getMyCourse 获取未学课程列表
+func (g GetCourseInfo) GetMyCourse() int {
+	b := "pageNo=1&pageSize=10&appStatus=I&pdate=" + strconv.FormatInt(time.Now().Unix(), 10)
+	request := g.requests("POST", "http://wlxy.jxnxs.com/app/course/getMyCourse", b)
+	request.Header.Set("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
+	resp, _ := g.Session.Do(request)
 	defer resp.Body.Close()
 	response := util.JsonToMap(resp.Body)
 	//fmt.Println(response["rows"])
-	courserows := response["rows"].([]interface{})
+	courseRows := response["rows"].([]interface{})
 	fmt.Println("未看课程列表：")
-	for i := 0; i < len(courserows); i++ {
-		title := courserows[i].(map[string]interface{})["item"].(map[string]interface{})["itm_title"]
-		id := courserows[i].(map[string]interface{})["item"].(map[string]interface{})["itm_id"]
+	for i := 0; i < len(courseRows); i++ {
+		title := courseRows[i].(map[string]interface{})["item"].(map[string]interface{})["itm_title"]
+		id := courseRows[i].(map[string]interface{})["item"].(map[string]interface{})["itm_id"]
 		fmt.Printf("%d、%s\n", int(id.(float64)), title)
 	}
 	fmt.Printf("请输入需要看的课程编号（课程名前面的数字）:")
 	var input int
 	fmt.Scanln(&input)
-	fmt.Printf("正在获取课程信息...%d", input)
+	return input
 }
 
-// [rows][?][item][itm_id] 获取课程itm_id
+// GetCourseDetail [rows][?][item][itm_id] 获取课程itm_id
 // 访问 http://wlxy.jxnxs.com/app/course/detailJson/+itm_id 获取课程详情
+func (g GetCourseInfo) GetCourseDetail(itmId int) {
+	fmt.Printf("正在获取课程信息...%d", itmId)
+	urlStr := "http://wlxy.jxnxs.com/app/course/detailJson/" + strconv.Itoa(itmId) + "?pdate=" + strconv.FormatInt(time.Now().Unix(), 10)
+	request := g.requests("GET", urlStr, "")
+	resp, _ := g.Session.Do(request)
+	defer resp.Body.Close()
+	response := util.JsonToMap(resp.Body)
+	fmt.Println(response["coscontent"])
+	// for循环内一次性调用直接快进视频的接口，将该课程内的所有视频都看完
+
+}
