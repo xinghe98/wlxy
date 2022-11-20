@@ -1,16 +1,15 @@
 package util
 
 import (
-	"encoding/json"
+	jsoniter "github.com/json-iterator/go"
 	"io"
-	"io/ioutil"
 )
 
 // JsontoMap Json转map
-func JsonToMap(Body io.ReadCloser) map[string]interface{} {
+func JsonToMap(Body io.Reader) map[string]interface{} {
 	var response map[string]interface{}
-	body, _ := ioutil.ReadAll(Body)
-	err := json.Unmarshal(body, &response)
+	var jsonMarshal = jsoniter.ConfigCompatibleWithStandardLibrary
+	err := jsonMarshal.NewDecoder(Body).Decode(&response)
 	if err != nil {
 		return nil
 	}

@@ -56,20 +56,22 @@ func (g GetCourseInfo) GetMyCourse() int {
 		fmt.Printf("%d、%s\n", int(id.(float64)), title)
 	}
 	fmt.Printf("请输入需要看的课程编号（课程名前面的数字）:")
-	var input int
-	input, err := fmt.Scanln(&input)
+	var itemId int
+	input, err := fmt.Scanln(&itemId)
+	fmt.Println(input)
 	if err != nil {
-		return 0
+		panic(err)
 	}
-	return input
+	return itemId
 }
 
 // GetCourseDetail [rows][?][item][itm_id] 获取课程itm_id
 // 访问 http://wlxy.jxnxs.com/app/course/detailJson/+itm_id 获取课程详情
 func (g GetCourseInfo) GetCourseDetail(itmId int) {
-	fmt.Printf("正在获取课程信息...%d", itmId)
+	fmt.Printf("正在获取课程信息...%s\n", strconv.Itoa(itmId))
 	urlStr := "http://wlxy.jxnxs.com/app/course/detailJson/" + strconv.Itoa(itmId) + "?pdate=" + strconv.FormatInt(time.Now().Unix(), 10)
 	request := g.requests("GET", urlStr, "")
+	fmt.Println(request.URL)
 	resp, _ := g.Session.Do(request)
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()

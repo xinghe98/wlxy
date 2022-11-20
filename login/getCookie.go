@@ -2,14 +2,14 @@ package login
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
+	jsoniter "github.com/json-iterator/go"
 	"github.com/xinghe98/wlxy/util"
-	"io/ioutil"
+	"golang.org/x/net/publicsuffix"
+	"io"
 	"net/http"
 	"net/http/cookiejar"
-
-	"golang.org/x/net/publicsuffix"
+	"os"
 )
 
 type Login struct {
@@ -28,9 +28,17 @@ func (l *Login) GetCaphta(url string) string {
 	if err != nil {
 		panic(err)
 	}
-	defer resp.Body.Close()
-	content, _ := ioutil.ReadAll(resp.Body)
-	err = ioutil.WriteFile("caphta.png", content, 0666)
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			panic(err)
+		}
+	}(resp.Body)
+	path, err := os.Create("caphta.png")
+	if err != nil {
+		return ""
+	}
+	_, err = io.Copy(path, resp.Body)
 	if err != nil {
 		panic(err)
 	}
@@ -45,7 +53,8 @@ func (l *Login) GetCookie(uri string, caphta string) (*http.Client, []*http.Cook
 	data["usrSteUsrId"] = l.Username
 	data["userPassword"] = l.Password
 	data["usrCode"] = caphta
-	b, _ := json.Marshal(data)
+	var json = jsoniter.ConfigCompatibleWithStandardLibrary
+	b, _ := json.Marshal(&data)
 	request, err := http.NewRequest("POST", uri, bytes.NewBuffer(b))
 	request.Header.Set("Content-Type", "application/json;charset=UTF-8")
 	request.Header.Set("Accept", "application/json, text/plain, */*")
@@ -54,7 +63,12 @@ func (l *Login) GetCookie(uri string, caphta string) (*http.Client, []*http.Cook
 		panic(err)
 	}
 	resp, _ := client.Do(request)
-	defer resp.Body.Close()
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			panic(err)
+		}
+	}(resp.Body)
 	response := util.JsonToMap(resp.Body)
 	if response["code"] == float64(200) {
 		fmt.Println("登录成功")
