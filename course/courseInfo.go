@@ -14,7 +14,7 @@ import (
 //student_id:userEntId (学员id)
 //lesson_id : mod_id (小节课程id)
 //lesson_location : 'default', (小节课程位置)
-//time : duration,
+//time : mod_required_time,
 //start_time : start_time,
 //tkh_id : tkh_id|app_tkh_id
 //cmt_lrn_pass_ind 判断课程是否完成
@@ -71,7 +71,7 @@ func (g GetCourseInfo) GetCourseDetail(itmId int) {
 	fmt.Printf("正在获取课程信息...%s\n", strconv.Itoa(itmId))
 	urlStr := "http://wlxy.jxnxs.com/app/course/detailJson/" + strconv.Itoa(itmId) + "?pdate=" + strconv.FormatInt(time.Now().Unix(), 10)
 	request := g.requests("GET", urlStr, "")
-	fmt.Println(request.URL)
+	//fmt.Println(request.URL)
 	resp, _ := g.Session.Do(request)
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
@@ -81,20 +81,26 @@ func (g GetCourseInfo) GetCourseDetail(itmId int) {
 	}(resp.Body)
 	response := util.JsonToMap(resp.Body)
 	//fmt.Println(response["coscontent"])
-	coscontent := response["coscontent"].([]interface{})
-	for i := 0; i < len(coscontent); i++ {
-		content := coscontent[i].(map[string]interface{})
-		restype := content["restype"]
-		if restype == "DXT" {
+	resId := int(response["resId"].(float64))                                      //cos_id
+	tkhId := int(response["app"].(map[string]interface{})["app_tkh_id"].(float64)) //tkh_id
+	studentId := int(response["userEntId"].(float64))                              //student_id
+	cmtList := response["ccr"].(map[string]interface{})["cmt_lst"].([]interface{}) //cmt_list
+	//fmt.Printf("resId:%d,tkhId:%d,studentId:%d", resId, tkhId, studentId)
+	for i := 0; i < len(cmtList); i++ {
+		content := cmtList[i].(map[string]interface{})["res"].(map[string]interface{})
+		// 使用课程文件类型以及课程状态判断是否需要学习
+		resType := content["res_type"]
+		statusPassed := cmtList[i].(map[string]interface{})["cmt_lrn_pass_ind"] // 课程状态
+		cmtTitle := cmtList[i].(map[string]interface{})["cmt_title"]            // 课程标题
+		//fmt.Println(resType, statusPassed)
+		if resType == "DXT" && statusPassed == false {
 			fmt.Println("这是个考试，暂时不支持")
 		}
-		if restype == "VOD" {
-			fmt.Println("正在加速观看..........")
-			resId := int(response["resId"].(float64))                                       //cos_id
-			tkhId := int(response["app"].(map[string]interface{})["app_tkh_id"].(float64))  //tkh_id
-			modId := int(content["resources"].(map[string]interface{})["res_id"].(float64)) //lesson_id
-			studentId := int(response["userEntId"].(float64))                               //student_id
-			fmt.Printf("resId:%d,tkhId:%d,modId:%d,studentId:%d", resId, tkhId, modId, studentId)
+		if resType == "VOD" && statusPassed == false {
+			fmt.Printf("正在加速观看..........%s\n", cmtTitle)
+			modId := int(content["res_id"].(float64))                                                                                                                                                   //lesson_id
+			requireTime := int(response["coscontent"].([]interface{})[i].(map[string]interface{})["resources"].(map[string]interface{})["mod"].(map[string]interface{})["mod_required_time"].(float64)) //time
+			fmt.Printf("resId:%d,tkhId:%d,modId:%d,studentId:%d,requiretime:%d\n", resId, tkhId, modId, studentId, requireTime)
 		}
 	}
 	// for循环内一次性调用直接快进视频的接口，将该课程内的所有视频都看完
