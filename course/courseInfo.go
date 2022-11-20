@@ -3,6 +3,7 @@ package course
 import (
 	"fmt"
 	"github.com/xinghe98/wlxy/util"
+	"io"
 	"net/http"
 	"strconv"
 	"strings"
@@ -39,7 +40,12 @@ func (g GetCourseInfo) GetMyCourse() int {
 	request := g.requests("POST", "http://wlxy.jxnxs.com/app/course/getMyCourse", b)
 	request.Header.Set("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
 	resp, _ := g.Session.Do(request)
-	defer resp.Body.Close()
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			panic(err)
+		}
+	}(resp.Body)
 	response := util.JsonToMap(resp.Body)
 	//fmt.Println(response["rows"])
 	courseRows := response["rows"].([]interface{})
@@ -51,7 +57,10 @@ func (g GetCourseInfo) GetMyCourse() int {
 	}
 	fmt.Printf("请输入需要看的课程编号（课程名前面的数字）:")
 	var input int
-	fmt.Scanln(&input)
+	input, err := fmt.Scanln(&input)
+	if err != nil {
+		return 0
+	}
 	return input
 }
 
@@ -62,7 +71,12 @@ func (g GetCourseInfo) GetCourseDetail(itmId int) {
 	urlStr := "http://wlxy.jxnxs.com/app/course/detailJson/" + strconv.Itoa(itmId) + "?pdate=" + strconv.FormatInt(time.Now().Unix(), 10)
 	request := g.requests("GET", urlStr, "")
 	resp, _ := g.Session.Do(request)
-	defer resp.Body.Close()
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			panic(err)
+		}
+	}(resp.Body)
 	response := util.JsonToMap(resp.Body)
 	fmt.Println(response["coscontent"])
 	// for循环内一次性调用直接快进视频的接口，将该课程内的所有视频都看完
