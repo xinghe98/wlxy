@@ -11,7 +11,7 @@ import (
 )
 
 //course_id:resId (大节课程id)
-//student_id:student_id (学员id)
+//student_id:userEntId (学员id)
 //lesson_id : mod_id (小节课程id)
 //lesson_location : 'default', (小节课程位置)
 //time : duration,
@@ -80,7 +80,23 @@ func (g GetCourseInfo) GetCourseDetail(itmId int) {
 		}
 	}(resp.Body)
 	response := util.JsonToMap(resp.Body)
-	fmt.Println(response["coscontent"])
+	//fmt.Println(response["coscontent"])
+	coscontent := response["coscontent"].([]interface{})
+	for i := 0; i < len(coscontent); i++ {
+		content := coscontent[i].(map[string]interface{})
+		restype := content["restype"]
+		if restype == "DXT" {
+			fmt.Println("这是个考试，暂时不支持")
+		}
+		if restype == "VOD" {
+			fmt.Println("正在加速观看..........")
+			resId := int(response["resId"].(float64))                                       //cos_id
+			tkhId := int(response["app"].(map[string]interface{})["app_tkh_id"].(float64))  //tkh_id
+			modId := int(content["resources"].(map[string]interface{})["res_id"].(float64)) //lesson_id
+			studentId := int(response["userEntId"].(float64))                               //student_id
+			fmt.Printf("resId:%d,tkhId:%d,modId:%d,studentId:%d", resId, tkhId, modId, studentId)
+		}
+	}
 	// for循环内一次性调用直接快进视频的接口，将该课程内的所有视频都看完
 
 }
