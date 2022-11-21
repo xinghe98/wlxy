@@ -100,7 +100,9 @@ func (g GetCourseInfo) GetCourseDetail(itmId int) {
 			fmt.Printf("正在加速观看..........%s\n", cmtTitle)
 			modId := int(content["res_id"].(float64))                                                                                                                                                   //lesson_id
 			requireTime := int(response["coscontent"].([]interface{})[i].(map[string]interface{})["resources"].(map[string]interface{})["mod"].(map[string]interface{})["mod_required_time"].(float64)) //time
-			fmt.Printf("resId:%d,tkhId:%d,modId:%d,studentId:%d,requiretime:%d\n", resId, tkhId, modId, studentId, requireTime)
+			hour, minute, second := util.ResolveTime(requireTime)
+			timeStr := fmt.Sprintf("%s:%s:%s", strconv.Itoa(hour), strconv.Itoa(minute), strconv.Itoa(second))
+			fmt.Printf("resId:%d,tkhId:%d,modId:%d,studentId:%d,requiretime:%s\n", resId, tkhId, modId, studentId, timeStr)
 		}
 	}
 	// for循环内一次性调用直接快进视频的接口，将该课程内的所有视频都看完
