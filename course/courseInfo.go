@@ -92,7 +92,12 @@ func (g *GetCourseInfo) GetCourseDetail(itmId int) {
 		resType := coscontent[i].(map[string]interface{})["restype"]
 		//statusPassed := cmtList[i].(map[string]interface{})["cmt_lrn_pass_ind"] // 课程状态
 		cmtTitle := coscontent[i].(map[string]interface{})["title"] // 课程标题
-		keyOF := coscontent[i].(map[string]interface{})["resources"].(map[string]interface{})
+		keyOf := coscontent[i].(map[string]interface{})["resources"]
+		if _, ok := keyOf.(map[string]interface{}); !ok {
+			fmt.Println("该课程存在问题，请联系管理员报告BUG")
+			return
+		}
+		keyOF := keyOf.(map[string]interface{})
 		requireTime := int(keyOF["mod"].(map[string]interface{})["mod_required_time"].(float64)) // 课程时长
 		var movTotalTime int
 		if _, ok := keyOF["mov"]; ok {
