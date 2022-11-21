@@ -3,6 +3,8 @@ package util
 import (
 	jsoniter "github.com/json-iterator/go"
 	"io"
+	"strconv"
+	"time"
 )
 
 // JsontoMap Json转map
@@ -23,4 +25,13 @@ func ResolveTime(seconds int) (hour, minute, second int) {
 	minute = (seconds - day*24*3600 - hour*3600) / 60
 	second = seconds - day*24*3600 - hour*3600 - minute*60
 	return hour, minute, second
+}
+
+// GenerateTime 时间格式化,生成一个start_time
+func GenerateTime(Times int) (timestr string) {
+	now := time.Now()
+	s, _ := time.ParseDuration("-" + strconv.Itoa(Times) + "s")
+	t := now.Add(s)
+	timestr = t.Format("2006-01-02 15:04:05")
+	return timestr
 }

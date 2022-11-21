@@ -4,13 +4,14 @@ import (
 	"fmt"
 	"github.com/xinghe98/wlxy/course"
 	"github.com/xinghe98/wlxy/login"
+	"os"
 )
 
 func main() {
-	//err := os.Setenv("HTTP_PROXY", "http://127.0.0.1:8888")
-	//if err != nil {
-	//	return
-	//}
+	err := os.Setenv("HTTP_PROXY", "http://127.0.0.1:8888")
+	if err != nil {
+		return
+	}
 
 	var username, password string
 	fmt.Print("请输入柜员号：")

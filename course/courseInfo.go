@@ -24,7 +24,7 @@ type GetCourseInfo struct {
 }
 
 // 专门用来post接口获取课程信息的接口
-func (g GetCourseInfo) requests(method string, uri string, b string) *http.Request {
+func (g *GetCourseInfo) requests(method string, uri string, b string) *http.Request {
 	request, err := http.NewRequest(method, uri, strings.NewReader(b))
 	request.Header.Set("Accept", "application/json,text/javascript, */*; q=0.01")
 	request.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36")
@@ -35,7 +35,7 @@ func (g GetCourseInfo) requests(method string, uri string, b string) *http.Reque
 }
 
 // GetMyCourse 访问 http://wlxy.jxnxs.com/app/course/getMyCourse 获取未学课程列表
-func (g GetCourseInfo) GetMyCourse() int {
+func (g *GetCourseInfo) GetMyCourse() int {
 	b := "pageNo=1&pageSize=10&appStatus=I&pdate=" + strconv.FormatInt(time.Now().Unix(), 10)
 	request := g.requests("POST", "http://wlxy.jxnxs.com/app/course/getMyCourse", b)
 	request.Header.Set("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
@@ -67,7 +67,7 @@ func (g GetCourseInfo) GetMyCourse() int {
 
 // GetCourseDetail [rows][?][item][itm_id] 获取课程itm_id
 // 访问 http://wlxy.jxnxs.com/app/course/detailJson/+itm_id 获取课程详情
-func (g GetCourseInfo) GetCourseDetail(itmId int) {
+func (g *GetCourseInfo) GetCourseDetail(itmId int) {
 	fmt.Printf("正在获取课程信息...%s\n", strconv.Itoa(itmId))
 	urlStr := "http://wlxy.jxnxs.com/app/course/detailJson/" + strconv.Itoa(itmId) + "?pdate=" + strconv.FormatInt(time.Now().Unix(), 10)
 	request := g.requests("GET", urlStr, "")
@@ -87,8 +87,10 @@ func (g GetCourseInfo) GetCourseDetail(itmId int) {
 	cmtList := response["ccr"].(map[string]interface{})["cmt_lst"].([]interface{}) //cmt_list
 	//fmt.Printf("resId:%d,tkhId:%d,studentId:%d", resId, tkhId, studentId)
 	for i := 0; i < len(cmtList); i++ {
+		fmt.Println(i)
 		content := cmtList[i].(map[string]interface{})["res"].(map[string]interface{})
 		// 使用课程文件类型以及课程状态判断是否需要学习
+		这里含有状态的列表顺序不是下面含有课程时长的顺序
 		resType := content["res_type"]
 		statusPassed := cmtList[i].(map[string]interface{})["cmt_lrn_pass_ind"] // 课程状态
 		cmtTitle := cmtList[i].(map[string]interface{})["cmt_title"]            // 课程标题
@@ -100,11 +102,26 @@ func (g GetCourseInfo) GetCourseDetail(itmId int) {
 			fmt.Printf("正在加速观看..........%s\n", cmtTitle)
 			modId := int(content["res_id"].(float64))                                                                                                                                                   //lesson_id
 			requireTime := int(response["coscontent"].([]interface{})[i].(map[string]interface{})["resources"].(map[string]interface{})["mod"].(map[string]interface{})["mod_required_time"].(float64)) //time
-			hour, minute, second := util.ResolveTime(requireTime)
+			hour, minute, second := util.ResolveTime(requireTime + 120)
+			fmt.Printf("本课程需要观看时间：%d小时%d分钟%d秒\n", hour, minute, second)
 			timeStr := fmt.Sprintf("%s:%s:%s", strconv.Itoa(hour), strconv.Itoa(minute), strconv.Itoa(second))
-			fmt.Printf("resId:%d,tkhId:%d,modId:%d,studentId:%d,requiretime:%s\n", resId, tkhId, modId, studentId, timeStr)
+			starttime := util.GenerateTime(requireTime + 360)
+			fmt.Printf("resId:%d,tkhId:%d,modId:%d,studentId:%d,requiretime:%d\n", resId, tkhId, modId, studentId, requireTime)
+			fmt.Println(response["coscontent"].([]interface{})[i].(map[string]interface{})["resources"].(map[string]interface{}))
+			learnCourse := LearnCourse{
+				CosId:       strconv.Itoa(resId),
+				StudentId:   strconv.Itoa(studentId),
+				LessonId:    strconv.Itoa(modId),
+				RequireTime: timeStr,
+				ModType:     resType.(string),
+				TkhId:       strconv.Itoa(tkhId),
+				StartTime:   starttime,
+				GetCourseInfo: &GetCourseInfo{
+					Session: g.Session,
+				},
+			}
+			learnCourse.Learn()
 		}
 	}
 	// for循环内一次性调用直接快进视频的接口，将该课程内的所有视频都看完
-
 }

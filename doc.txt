@@ -1,0 +1,20 @@
+http://wlxy.jxnxs.com/app/course/saveVod?course_id=19500&student_id=62039&lesson_id=19504&lesson_location=default&lesson_status=C&time=00%3A00%3A59.20000000000057&start_time=2022-11-21+11%3A27%3A55.0&tkh_id=2841347
+
+
+
+course_id:
+19500
+student_id:
+62039
+lesson_id:
+19504
+lesson_location:
+default
+lesson_status:
+C
+time:
+00:00:59.20000000000057
+start_time:
+2022-11-21 11:27:55.0
+tkh_id:
+2841347
