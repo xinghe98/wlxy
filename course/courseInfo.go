@@ -84,30 +84,31 @@ func (g *GetCourseInfo) GetCourseDetail(itmId int) {
 	resId := int(response["resId"].(float64))                                      //cos_id
 	tkhId := int(response["app"].(map[string]interface{})["app_tkh_id"].(float64)) //tkh_id
 	studentId := int(response["userEntId"].(float64))                              //student_id
-	cmtList := response["ccr"].(map[string]interface{})["cmt_lst"].([]interface{}) //cmt_list
+	//cmtList := response["ccr"].(map[string]interface{})["cmt_lst"].([]interface{}) //cmt_list
 	//fmt.Printf("resId:%d,tkhId:%d,studentId:%d", resId, tkhId, studentId)
-	for i := 0; i < len(cmtList); i++ {
-		fmt.Println(i)
-		content := cmtList[i].(map[string]interface{})["res"].(map[string]interface{})
+	coscontent := response["coscontent"].([]interface{})
+	for i := 0; i < len(coscontent); i++ {
 		// 使用课程文件类型以及课程状态判断是否需要学习
 		//这里含有状态的列表顺序不是下面含有课程时长的顺序
-		resType := content["res_type"]
-		statusPassed := cmtList[i].(map[string]interface{})["cmt_lrn_pass_ind"] // 课程状态
-		cmtTitle := cmtList[i].(map[string]interface{})["cmt_title"]            // 课程标题
-		//fmt.Println(resType, statusPassed)
-		if resType == "DXT" && statusPassed == false {
+		resType := coscontent[i].(map[string]interface{})["restype"]
+		//statusPassed := cmtList[i].(map[string]interface{})["cmt_lrn_pass_ind"] // 课程状态
+		cmtTitle := coscontent[i].(map[string]interface{})["title"] // 课程标题
+		keyOF := coscontent[i].(map[string]interface{})["resources"].(map[string]interface{})
+		requireTime := int(keyOF["mod"].(map[string]interface{})["mod_required_time"].(float64)) // 课程时长
+		movTotalTime := int(keyOF["mov"].(map[string]interface{})["mov_total_time"].(float64))   // 课程已经学习时长
+		if resType == "DXT" {
 			fmt.Println("这是个考试，暂时不支持")
 		}
-		if resType == "VOD" && statusPassed == false {
+		if _, ok := keyOF["mov"]; !ok && resType == "VOD" || resType == "VOD" {
+			courseTime := requireTime - movTotalTime
 			fmt.Printf("正在加速观看..........%s\n", cmtTitle)
-			modId := int(content["res_id"].(float64))                                                                                                                                                   //lesson_id
-			requireTime := int(response["coscontent"].([]interface{})[i].(map[string]interface{})["resources"].(map[string]interface{})["mod"].(map[string]interface{})["mod_required_time"].(float64)) //time
-			hour, minute, second := util.ResolveTime(requireTime + 120)
+			modId := int(coscontent[i].(map[string]interface{})["id"].(float64)) //lesson_id
+			hour, minute, second := util.ResolveTime(courseTime + 120)
 			fmt.Printf("本课程需要观看时间：%d小时%d分钟%d秒\n", hour, minute, second)
 			timeStr := fmt.Sprintf("%s:%s:%s", strconv.Itoa(hour), strconv.Itoa(minute), strconv.Itoa(second))
-			starttime := util.GenerateTime(requireTime + 360)
-			fmt.Printf("resId:%d,tkhId:%d,modId:%d,studentId:%d,requiretime:%d\n", resId, tkhId, modId, studentId, requireTime)
-			fmt.Println(response["coscontent"].([]interface{})[i].(map[string]interface{})["resources"].(map[string]interface{}))
+			starttime := util.GenerateTime(courseTime + 360)
+			fmt.Printf("resId:%d,tkhId:%d,modId:%d,studentId:%d,requiretime:%d\n", resId, tkhId, modId, studentId, courseTime)
+			//fmt.Println(response["coscontent"].([]interface{})[i].(map[string]interface{})["resources"].(map[string]interface{}))
 			learnCourse := LearnCourse{
 				CosId:       strconv.Itoa(resId),
 				StudentId:   strconv.Itoa(studentId),
