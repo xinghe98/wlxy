@@ -90,7 +90,7 @@ func (g *GetCourseInfo) GetCourseDetail(itmId int) {
 		fmt.Println(i)
 		content := cmtList[i].(map[string]interface{})["res"].(map[string]interface{})
 		// 使用课程文件类型以及课程状态判断是否需要学习
-		这里含有状态的列表顺序不是下面含有课程时长的顺序
+		//这里含有状态的列表顺序不是下面含有课程时长的顺序
 		resType := content["res_type"]
 		statusPassed := cmtList[i].(map[string]interface{})["cmt_lrn_pass_ind"] // 课程状态
 		cmtTitle := cmtList[i].(map[string]interface{})["cmt_title"]            // 课程标题
