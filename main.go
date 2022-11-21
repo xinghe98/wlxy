@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/xinghe98/wlxy/course"
 	"github.com/xinghe98/wlxy/login"
+	"os"
 )
 
 func main() {
@@ -32,8 +33,14 @@ func main() {
 	switch choice {
 	case 1:
 		getCourseInfo := course.GetCourseInfo{Session: client}
-		itmId := getCourseInfo.GetMyCourse()
-		getCourseInfo.GetCourseDetail(itmId)
+
+		for {
+			itmId := getCourseInfo.GetMyCourse()
+			if itmId == 0 {
+				os.Exit(0)
+			}
+			getCourseInfo.GetCourseDetail(itmId)
+		}
 	case 0:
 		return
 	}
