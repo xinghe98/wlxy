@@ -1,9 +1,11 @@
+//go:generate goversioninfo
 package main
 
 import (
 	"fmt"
 	"github.com/xinghe98/wlxy/course"
 	"github.com/xinghe98/wlxy/login"
+	"github.com/xinghe98/wlxy/util"
 	"os"
 )
 
@@ -13,11 +15,14 @@ func main() {
 	//	return
 	//}
 
-	var username, password string
+	var username, basePassword string
 	fmt.Print("请输入柜员号：")
 	//goland:noinspection ALL
 	fmt.Scanln(&username)
-	password = "/DFGws7yGmJIUmbuYMU+Mg==" // 密码加密后的值
+	fmt.Print("请输入密码：")
+	//goland:noinspection ALL
+	fmt.Scanln(&basePassword)
+	password := util.EncodePassword(basePassword)
 	sigin := login.Login{Username: username, Password: password}
 	caphta := sigin.GetCaphta("http://wlxy.jxnxs.com/app/captcha/captcha")
 	client, _, err := sigin.GetCookie("http://wlxy.jxnxs.com/app/user/single/userlogin/login", caphta)

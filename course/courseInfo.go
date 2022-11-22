@@ -95,7 +95,7 @@ func (g *GetCourseInfo) GetCourseDetail(itmId int) {
 		keyOf := coscontent[i].(map[string]interface{})["resources"]
 		if _, ok := keyOf.(map[string]interface{}); !ok {
 			fmt.Println("该课程存在问题，请联系管理员报告BUG")
-			return
+			continue
 		}
 		keyOF := keyOf.(map[string]interface{})
 		requireTime := int(keyOF["mod"].(map[string]interface{})["mod_required_time"].(float64)) // 课程时长

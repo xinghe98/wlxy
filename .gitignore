@@ -1,5 +1,6 @@
 # Logs
 .idea
+versioninfo.json
 logs
 *.log
 npm-debug.log*

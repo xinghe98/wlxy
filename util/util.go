@@ -1,7 +1,9 @@
 package util
 
 import (
+	"fmt"
 	jsoniter "github.com/json-iterator/go"
+	"github.com/marspere/goencrypt"
 	"io"
 	"strconv"
 	"time"
@@ -34,4 +36,19 @@ func GenerateTime(Times int) (timestr string) {
 	t := now.Add(s)
 	timestr = t.Format("2006-01-02 15:04:05")
 	return timestr
+}
+
+func EncodePassword(password string) string {
+	cipher, err := goencrypt.NewAESCipher([]byte("wizbank_20220916"), []byte("wizbank_20220916"), goencrypt.CBCMode, goencrypt.Pkcs7, goencrypt.PrintBase64)
+	if err != nil {
+		fmt.Println(err)
+		return ""
+	}
+	cipherText, err := cipher.AESEncrypt([]byte(password))
+	if err != nil {
+		fmt.Println(err)
+		return ""
+	}
+	return cipherText
+
 }
